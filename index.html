@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#315b45">
+<meta name="description" content="Searchable food nutrition and Ayurveda reference database">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Ahara — Food & Ayurveda</title>
+<style>
+:root{--green:#315b45;--green2:#eaf2ec;--ink:#1e2a22;--muted:#68756c;--line:#e2e9e3;--paper:#f7f9f6;--white:#fff;--gold:#b17b2b}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+header{background:var(--green);color:white;padding:22px max(18px,calc((100% - 1050px)/2)) 24px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:25px;font-weight:750;letter-spacing:.2px}.sub{opacity:.85;font-size:13px}
+main{max-width:1050px;margin:auto;padding:20px 16px 60px}
+.searchbar{display:flex;gap:9px;margin-top:20px}.searchbar input{flex:1;min-width:0;padding:14px 15px;border:0;border-radius:12px;font-size:16px;outline:none}
+button,.btn{border:0;border-radius:10px;padding:10px 14px;background:var(--green);color:white;font-weight:650;cursor:pointer;font-size:14px}
+button.secondary{background:var(--green2);color:var(--green)}button.ghost{background:transparent;border:1px solid var(--line);color:var(--green)}
+.filters{display:flex;gap:8px;overflow:auto;padding:16px 0 4px}.chip{white-space:nowrap;border:1px solid var(--line);background:white;color:var(--muted);border-radius:99px;padding:8px 13px}.chip.active{background:var(--green2);border-color:#b9cfbf;color:var(--green)}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:18px 0 12px;color:var(--muted);font-size:13px}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{background:white;border:1px solid var(--line);border-radius:15px;padding:15px;text-align:left;color:var(--ink);width:100%;box-shadow:0 2px 8px #183a2410}.card h3{margin:0 0 3px;font-size:17px}.tag{font-size:11px;color:var(--green);background:var(--green2);padding:3px 8px;border-radius:99px;display:inline-block}.cal{font-size:13px;color:var(--muted);margin-top:12px}.empty{background:white;border:1px dashed var(--line);padding:28px;border-radius:14px;text-align:center;color:var(--muted);grid-column:1/-1}
+.overlay{position:fixed;inset:0;background:#10201688;display:none;align-items:flex-end;justify-content:center;padding:12px;z-index:5}.overlay.show{display:flex}.panel{background:white;width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:20px;padding:20px}.panelhead{display:flex;justify-content:space-between;align-items:center;gap:10px}.panel h2{margin:0}.close{font-size:22px;background:var(--green2);color:var(--green);padding:5px 11px}
+.detailgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:15px 0}.metric{background:var(--paper);border-radius:12px;padding:12px}.metric small{display:block;color:var(--muted)}.metric b{font-size:18px}.section{border-top:1px solid var(--line);padding:14px 0}.section h3{margin:0 0 8px;font-size:15px;color:var(--green)}.kv{display:grid;grid-template-columns:130px 1fr;gap:5px 12px;font-size:14px}.kv span:nth-child(odd){color:var(--muted)}
+.admin{margin-top:30px;padding:16px;background:white;border:1px solid var(--line);border-radius:15px}.admin h3{margin:0 0 4px}.admin p{margin:0 0 12px;color:var(--muted);font-size:13px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:flex;flex-direction:column;gap:4px}.field.full{grid-column:1/-1}.field label{font-size:12px;color:var(--muted);font-weight:650}.field input,.field textarea,.field select{border:1px solid var(--line);border-radius:9px;padding:10px;font:inherit;width:100%;background:white}.field textarea{min-height:65px}
+.admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.notice{font-size:12px;color:var(--muted);margin-top:10px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:620px){.cards{grid-template-columns:1fr}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.top{align-items:flex-start}.brand{font-size:22px}.overlay{padding:0}.panel{border-radius:20px 20px 0 0;max-height:94vh}}
+</style>
+</head>
+<body>
+<header><div class="top"><div><div class="brand">🌿 Ahara</div><div class="sub">Food • Nutrition • Ayurveda</div></div><div class="sub">REFERENCE DATABASE</div></div>
+<div class="searchbar"><input id="search" type="search" placeholder="Search apple, rice, milk…" autocomplete="off"><button id="clear" class="secondary">Clear</button></div></header>
+<main>
+<div class="filters" id="filters"></div>
+<div class="meta"><span id="count">Loading foods…</span><span>Nutrition values per 100 g unless noted</span></div>
+<div class="cards" id="cards"></div>
+<section class="admin">
+<h3>Database editor</h3><p>Prototype editor: changes are saved only in this browser on this device. Secure owner-only editing and shared public data need a connected database.</p>
+<div id="adminLogin"><button id="unlock">Open editor</button></div>
+<form id="foodForm" hidden>
+<div class="formgrid">
+<div class="field"><label>Food name *</label><input name="name" required></div>
+<div class="field"><label>Category</label><input name="category" placeholder="Fruit, grain, dairy…"></div>
+<div class="field"><label>Calories (kcal)</label><input name="calories" type="number" step="any"></div>
+<div class="field"><label>Protein (g)</label><input name="protein" type="number" step="any"></div>
+<div class="field"><label>Carbohydrates (g)</label><input name="carbs" type="number" step="any"></div>
+<div class="field"><label>Fat (g)</label><input name="fat" type="number" step="any"></div>
+<div class="field"><label>Rasa</label><input name="rasa" placeholder="Madhura, Amla…"></div>
+<div class="field"><label>Guna</label><input name="guna" placeholder="Guru, Laghu…"></div>
+<div class="field"><label>Virya</label><input name="virya" placeholder="Ushna / Sheeta"></div>
+<div class="field"><label>Vipaka</label><input name="vipaka"></div>
+<div class="field full"><label>Dosha effect</label><input name="dosha" placeholder="Vata / Pitta / Kapha effect"></div>
+<div class="field full"><label>Benefits / notes</label><textarea name="notes"></textarea></div>
+</div>
+<div class="admin-actions"><button type="submit">Save food item</button><button type="button" class="secondary" id="new">New entry</button><button type="button" class="ghost" id="lock">Close editor</button></div>
+<div class="notice">Demo access code: <b>2468</b>. This is not secure authentication. Do not publish sensitive data in this prototype.</div>
+</form>
+</section>
+</main>
+<footer>Ahara Food & Ayurveda Database · Educational reference, not medical advice.</footer>
+<div class="overlay" id="overlay"><div class="panel"><div class="panelhead"><h2 id="detailName"></h2><button class="close" id="close">×</button></div><div id="detailBody"></div></div></div>
+<script>
+const starter=[
+{id:"apple",name:"Apple",category:"Fruit",calories:52,protein:0.3,carbs:13.8,fat:0.2,rasa:"Madhura, Kashaya (commonly described)",guna:"Guru / varies by source and preparation",virya:"Sheeta (traditional references vary)",vipaka:"Madhura",dosha:"May be considered generally balancing depending on variety, ripeness and preparation",notes:"Nutrient values vary by variety. Verify Ayurvedic attributes against the source text used for your database."},
+{id:"banana",name:"Banana",category:"Fruit",calories:89,protein:1.1,carbs:22.8,fat:0.3,rasa:"Madhura",guna:"Guru, Snigdha (traditional descriptions)",virya:"Sheeta",vipaka:"Madhura",dosha:"Often described as potentially increasing Kapha; effects depend on individual and preparation",notes:"Nutrition values are approximate for raw banana."},
+{id:"almonds",name:"Almonds",category:"Nuts",calories:579,protein:21.2,carbs:21.6,fat:49.9,rasa:"Madhura",guna:"Guru, Snigdha",virya:"Ushna (described in some traditions)",vipaka:"Madhura",dosha:"Traditionally considered Vata-pacifying; quantity and preparation matter",notes:"Nutrition values are approximate for raw almonds."},
+{id:"cow-milk",name:"Cow milk",category:"Dairy",calories:61,protein:3.2,carbs:4.8,fat:3.3,rasa:"Madhura",guna:"Guru, Snigdha",virya:"Sheeta",vipaka:"Madhura",dosha:"Traditional effect depends on digestion, quantity and preparation",notes:"Approximate values for whole cow milk; composition varies."},
+{id:"cooked-rice",name:"Rice, cooked",category:"Grains",calories:130,protein:2.7,carbs:28.2,fat:0.3,rasa:"Madhura",guna:"Varies by rice type and preparation",virya:"Commonly described as Sheeta",vipaka:"Madhura",dosha:"Depends on variety, age, preparation and portion",notes:"Approximate values for cooked white long-grain rice."},
+{id:"mung-dal",name:"Mung dal, cooked",category:"Legumes",calories:105,protein:7.0,carbs:19.2,fat:0.4,rasa:"Madhura, Kashaya",guna:"Laghu (often described when properly cooked)",virya:"Sheeta",vipaka:"Katu (traditional descriptions vary)",dosha:"Often described as relatively Tridosha-friendly when well prepared",notes:"Approximate values; preparation changes digestibility and nutrition."}
+];
+let foods=loadFoods(), category="All", editingId=null, unlocked=false;
+function loadFoods(){try{return JSON.parse(localStorage.getItem("aharaFoods"))||starter}catch(e){return starter}}
+function persist(){localStorage.setItem("aharaFoods",JSON.stringify(foods))}
+const $=id=>document.getElementById(id);
+function cats(){return ["All",...new Set(foods.map(f=>f.category||"Other"))].sort((a,b)=>a==="All"?-1:a.localeCompare(b))}
+function renderFilters(){$("filters").innerHTML=cats().map(c=>`<button class="chip ${category===c?"active":""}" data-cat="${esc(c)}">${esc(c)}</button>`).join("");document.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{category=b.dataset.cat;render()})}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function render(){renderFilters();let q=$("search").value.trim().toLowerCase();let list=foods.filter(f=>(category==="All"||f.category===category)&&[f.name,f.category,f.rasa,f.dosha].join(" ").toLowerCase().includes(q));$("count").textContent=`${list.length} food item${list.length===1?"":"s"}`;$("cards").innerHTML=list.length?list.map(f=>`<button class="card" data-id="${esc(f.id)}"><div style="display:flex;justify-content:space-between;gap:8px"><h3>${esc(f.name)}</h3><span class="tag">${esc(f.category||"Other")}</span></div><div class="cal">${f.calories??"—"} kcal · Protein ${f.protein??"—"} g per 100 g</div><div class="cal">Rasa: ${esc(f.rasa||"Not entered")}</div></button>`).join(""):`<div class="empty">No foods found. Try another search or category.</div>`;document.querySelectorAll("[data-id]").forEach(b=>b.onclick=()=>showDetail(b.dataset.id))}
+function showDetail(id){let f=foods.find(x=>x.id===id);if(!f)return;$("detailName").textContent=f.name;$("detailBody").innerHTML=`<span class="tag">${esc(f.category||"Other")}</span><div class="detailgrid">${[["Calories",f.calories,"kcal"],["Protein",f.protein,"g"],["Carbohydrates",f.carbs,"g"],["Fat",f.fat,"g"]].map(x=>`<div class="metric"><small>${x[0]}</small><b>${x[1]??"—"} ${x[2]}</b></div>`).join("")}</div><div class="section"><h3>Ayurvedic properties</h3><div class="kv"><span>Rasa</span><b>${esc(f.rasa||"Not entered")}</b><span>Guna</span><b>${esc(f.guna||"Not entered")}</b><span>Virya</span><b>${esc(f.virya||"Not entered")}</b><span>Vipaka</span><b>${esc(f.vipaka||"Not entered")}</b><span>Dosha effect</span><b>${esc(f.dosha||"Not entered")}</b></div></div><div class="section"><h3>Benefits / notes</h3>${esc(f.notes||"No notes added.")}</div>${unlocked?`<div class="admin-actions"><button id="editThis">Edit item</button><button class="secondary" id="deleteThis">Delete</button></div>`:""}<div class="notice">Nutrition values are approximate. Ayurvedic descriptions can vary by classical source, variety, processing and preparation.</div>`;$("overlay").classList.add("show");if(unlocked){$("editThis").onclick=()=>{ $("overlay").classList.remove("show");fillForm(f)};$("deleteThis").onclick=()=>{if(confirm("Delete "+f.name+"?")){foods=foods.filter(x=>x.id!==id);persist();$("overlay").classList.remove("show");render()}}}}
+function fillForm(f){editingId=f?.id||null;let form=$("foodForm");for(let k of ["name","category","calories","protein","carbs","fat","rasa","guna","virya","vipaka","dosha","notes"])form.elements[k].value=f?.[k]??"";form.scrollIntoView({behavior:"smooth",block:"center"})}
+$("search").addEventListener("input",render);$("clear").onclick=()=>{$("search").value="";category="All";render()};$("close").onclick=()=>$("overlay").classList.remove("show");$("overlay").onclick=e=>{if(e.target===$("overlay"))$("overlay").classList.remove("show")};
+$("unlock").onclick=()=>{let p=prompt("Enter editor access code");if(p==="2468"){unlocked=true;$("adminLogin").hidden=true;$("foodForm").hidden=false;render()}else if(p!==null)alert("Incorrect code")};
+$("lock").onclick=()=>{unlocked=false;$("adminLogin").hidden=false;$("foodForm").hidden=true;render()};$("new").onclick=()=>fillForm(null);
+$("foodForm").onsubmit=e=>{e.preventDefault();let d=new FormData(e.target),f={};for(let k of ["name","category","rasa","guna","virya","vipaka","dosha","notes"])f[k]=d.get(k).trim();for(let k of ["calories","protein","carbs","fat"])f[k]=d.get(k)===""?null:Number(d.get(k));f.id=editingId||f.name.toLowerCase().replace(/[^a-z0-9]+/g,"-")+"-"+Date.now();if(editingId)foods=foods.map(x=>x.id===editingId?f:x);else foods.push(f);persist();e.target.reset();editingId=null;render();alert("Saved in this browser.")};
+render();
+</script>
+</body></html>
